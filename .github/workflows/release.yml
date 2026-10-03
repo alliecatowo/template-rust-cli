@@ -17,7 +17,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  BIN: template-rust-cli
+  BIN: ${{ github.event.repository.name }}
 
 jobs:
   verify:

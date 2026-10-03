@@ -1,0 +1,9 @@
+:root { color-scheme: light dark; --fg: #1b1b1f; --bg: #fff; --accent: #3451b2; }
+@media (prefers-color-scheme: dark) { :root { --fg: #dfdfd6; --bg: #1b1b1f; --accent: #a8b1ff; } }
+body { margin: 0; color: var(--fg); background: var(--bg); font: 16px/1.6 system-ui, sans-serif; }
+header { display: flex; gap: 1.5rem; align-items: baseline; padding: 1rem 1.5rem; border-bottom: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); }
+.brand { font-weight: 700; text-decoration: none; color: var(--fg); }
+main { max-width: 46rem; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+a { color: var(--accent); }
+pre, code { font-family: ui-monospace, monospace; }
+pre { padding: 1rem; overflow-x: auto; background: color-mix(in srgb, var(--fg) 8%, transparent); border-radius: 6px; }

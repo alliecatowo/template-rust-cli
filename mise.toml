@@ -1,0 +1,27 @@
+[tools]
+# Channel comes from rust-toolchain.toml (stable); mise installs it through rustup.
+rust = "stable"
+lefthook = "2.1.16"
+
+[hooks]
+# Installs the git hooks the first time `mise install` runs in a clone.
+postinstall = "lefthook install"
+
+[tasks.fmt]
+description = "Format"
+run = "cargo fmt --all"
+
+[tasks.check]
+description = "fmt + clippy, as CI runs them"
+run = [
+  "cargo fmt --all --check",
+  "cargo clippy --workspace --all-targets --locked -- -D warnings",
+]
+
+[tasks.test]
+description = "Run the test suite"
+run = "cargo test --workspace --locked"
+
+[tasks.build]
+description = "Release build"
+run = "cargo build --workspace --release --locked"

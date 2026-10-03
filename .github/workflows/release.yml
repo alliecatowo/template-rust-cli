@@ -1,0 +1,112 @@
+name: Release
+
+# Cut a release: bump `version` in Cargo.toml (workspace.package), update CHANGELOG.md, merge,
+# then `git tag vX.Y.Z && git push origin vX.Y.Z`. The tag must equal the Cargo version.
+#
+# One-time setup for the Homebrew job (alliecatowo/homebrew-tap):
+#   1. ssh-keygen -t ed25519 -N '' -f tap-key
+#   2. Add tap-key.pub as a WRITE deploy key on alliecatowo/homebrew-tap.
+#   3. Add the private key as the repo secret HOMEBREW_TAP_DEPLOY_KEY here, then delete the files.
+# Without the secret the job logs a notice and does nothing; the release still succeeds.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  BIN: template-rust-cli
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tag matches Cargo version
+        run: |
+          v="$(grep -m1 '^version = ' Cargo.toml | cut -d'"' -f2)"
+          [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME != Cargo version v$v" >&2; exit 1; }
+
+  build:
+    needs: verify
+    name: build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { os: macos-latest, target: aarch64-apple-darwin }
+          - { os: macos-latest, target: x86_64-apple-darwin }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Test
+        run: cargo test --workspace --locked
+      - name: Build
+        run: cargo build --release --locked --bin "$BIN" --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          dist="${BIN}-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          mkdir -p "$dist"
+          cp "target/${{ matrix.target }}/release/${BIN}" README.md LICENSE "$dist/"
+          tar czf "$dist.tar.gz" "$dist"
+          echo "ASSET=$dist.tar.gz" >> "$GITHUB_ENV"
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: ${{ env.ASSET }}
+          generate_release_notes: true
+
+  homebrew:
+    needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: true # a tap hiccup must never fail the release
+    env:
+      TAP_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Skip when the deploy key is not configured
+        id: guard
+        run: |
+          if [ -z "$TAP_KEY" ]; then echo "::notice::HOMEBREW_TAP_DEPLOY_KEY not set; skipping tap update"; echo "run=false" >> "$GITHUB_OUTPUT"; else echo "run=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v7
+        if: steps.guard.outputs.run == 'true'
+      - name: Render formula
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir assets && gh release download "$GITHUB_REF_NAME" --pattern '*.tar.gz' --dir assets
+          sha() { sha256sum "assets/${BIN}-${GITHUB_REF_NAME}-$1.tar.gz" | cut -d' ' -f1; }
+          class="$(echo "$BIN" | sed -E 's/(^|-)([a-z])/\U\2/g')"
+          sed -e "s|@CLASS@|$class|g" -e "s|@VERSION@|$version|g" \
+              -e "s|@SHA_MAC_ARM@|$(sha aarch64-apple-darwin)|" \
+              -e "s|@SHA_MAC_INTEL@|$(sha x86_64-apple-darwin)|" \
+              -e "s|@SHA_LINUX_ARM@|$(sha aarch64-unknown-linux-gnu)|" \
+              -e "s|@SHA_LINUX_INTEL@|$(sha x86_64-unknown-linux-gnu)|" \
+              packaging/homebrew/formula.rb.tmpl > "$RUNNER_TEMP/$BIN.rb"
+      - name: Push to the tap
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          install -m 600 /dev/null "$RUNNER_TEMP/key"
+          printf '%s\n' "$TAP_KEY" > "$RUNNER_TEMP/key"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/key -o StrictHostKeyChecking=accept-new"
+          git clone git@github.com:alliecatowo/homebrew-tap.git "$RUNNER_TEMP/tap"
+          cd "$RUNNER_TEMP/tap"
+          mkdir -p Formula
+          cp "$RUNNER_TEMP/$BIN.rb" "Formula/$BIN.rb"
+          if git diff --quiet && [ -z "$(git status --porcelain)" ]; then echo "tap already up to date"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Formula/$BIN.rb"
+          git commit -m "chore: $BIN ${GITHUB_REF_NAME}"
+          git push origin HEAD:main

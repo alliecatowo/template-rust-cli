@@ -1,0 +1,15 @@
+[package]
+name = "template-rust-cli-core"
+description = "Rust CLI template: Cargo workspace, clap, clippy, mise, lefthook, CI, release tarballs, Homebrew bump and a Zola docs site."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+
+[lints]
+workspace = true

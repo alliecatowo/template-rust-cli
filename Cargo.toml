@@ -1,0 +1,35 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Allison Coleman"]
+repository = "https://github.com/alliecatowo/template-rust-cli"
+rust-version = "1.90"
+
+[workspace.dependencies]
+template-rust-cli-core = { path = "crates/template-rust-cli-core", version = "0.1.0" }
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+thiserror = "2.0.21"
+assert_cmd = "2.2.2"
+predicates = "3.1.4"
+
+# Crates opt in with `[lints] workspace = true`. Clippy runs with -D warnings in CI.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+todo = "warn"
+unwrap_used = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

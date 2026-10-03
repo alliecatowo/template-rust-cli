@@ -1,0 +1,8 @@
+# Zola docs site. GitHub Pages serves project sites under /<repo>/; the workflow passes
+# --base-url explicitly, so base_url here only matters for local `zola serve`.
+base_url = "https://alliecatowo.github.io/template-rust-cli"
+title = "template-rust-cli"
+description = "Rust CLI template: Cargo workspace, clap, clippy, mise, lefthook, CI, release tarballs, Homebrew bump and a Zola docs site."
+compile_sass = false
+build_search_index = false
+generate_feeds = false

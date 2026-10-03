@@ -1,0 +1,38 @@
+# Rendered by the `homebrew` job in .github/workflows/release.yml on every release and pushed to
+# alliecatowo/homebrew-tap. Always render from this template; never sed the committed formula.
+class @CLASS@ < Formula
+  desc "Rust CLI template: Cargo workspace, clap, clippy, mise, lefthook, CI, release tarballs, Homebrew bump and a Zola docs site."
+  homepage "https://github.com/alliecatowo/template-rust-cli"
+  version "@VERSION@"
+  license "MIT"
+
+  on_macos do
+    on_arm do
+      url "https://github.com/alliecatowo/template-rust-cli/releases/download/v@VERSION@/template-rust-cli-v@VERSION@-aarch64-apple-darwin.tar.gz"
+      sha256 "@SHA_MAC_ARM@"
+    end
+    on_intel do
+      url "https://github.com/alliecatowo/template-rust-cli/releases/download/v@VERSION@/template-rust-cli-v@VERSION@-x86_64-apple-darwin.tar.gz"
+      sha256 "@SHA_MAC_INTEL@"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/alliecatowo/template-rust-cli/releases/download/v@VERSION@/template-rust-cli-v@VERSION@-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "@SHA_LINUX_ARM@"
+    end
+    on_intel do
+      url "https://github.com/alliecatowo/template-rust-cli/releases/download/v@VERSION@/template-rust-cli-v@VERSION@-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "@SHA_LINUX_INTEL@"
+    end
+  end
+
+  def install
+    bin.install "template-rust-cli"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/template-rust-cli --version")
+  end
+end

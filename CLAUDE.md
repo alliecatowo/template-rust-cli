@@ -4,7 +4,7 @@ Guidance for AI agents (and humans) working in the **template-rust-cli** repo.
 
 ## What template-rust-cli is
 
-Rust CLI template: Cargo workspace, clap, clippy, mise, lefthook, CI, release tarballs, Homebrew bump and a Zola docs site. A Rust CLI built with `clap` (derive) in a Cargo workspace; logic lives in a library crate so it stays unit-testable.
+Rust CLI template with CI, releases and docs. A Rust CLI built with `clap` (derive) in a Cargo workspace; logic lives in a library crate so it stays unit-testable.
 
 ## Commands
 

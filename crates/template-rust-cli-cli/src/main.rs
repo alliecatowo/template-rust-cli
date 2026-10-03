@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 
-/// Rust CLI template: Cargo workspace, clap, clippy, mise, lefthook, CI, release tarballs, Homebrew bump and a Zola docs site.
+/// Rust CLI template with CI, releases and docs.
 #[derive(Parser, Debug)]
 #[command(version, about)]
 struct Cli {

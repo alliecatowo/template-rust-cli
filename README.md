@@ -1,6 +1,6 @@
 # template-rust-cli
 
-Rust CLI template: Cargo workspace, clap, clippy, mise, lefthook, CI, release tarballs, Homebrew bump and a Zola docs site.
+Rust CLI template with CI, releases and docs.
 
 ## Install
 
